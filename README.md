@@ -4,6 +4,25 @@ ElectroMart is a full-stack AI-powered e-commerce assistant designed to handle *
 
 The project is structured as a **monorepo** with separate frontend and backend applications, each having its own setup and documentation.
 
+<br>
+
+<p align="center">
+  <a href="https://youtu.be/RGqzeBq9rMs" target="_blank" rel="noopener noreferrer">
+    <img 
+      src="https://img.youtube.com/vi/RGqzeBq9rMs/maxresdefault.jpg" 
+      alt="ElectroMart Demo Video" 
+      width="640" 
+      style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"
+    />
+    <br><br>
+    <strong style="font-size: 1.3em;">▶️ Watch Demo Video</strong>
+  </a>
+</p>
+
+<p align="center">
+  Also check out the full project on GitHub:<br>
+  <a href="YOUR_GITHUB_REPO_URL_HERE">https://github.com/YOUR_USERNAME/ElectroMart</a>
+</p>
 ---
 
 ## 📂 Repository Structure
