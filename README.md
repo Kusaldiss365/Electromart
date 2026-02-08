@@ -19,10 +19,6 @@ The project is structured as a **monorepo** with separate frontend and backend a
   </a>
 </p>
 
-<p align="center">
-  Also check out the full project on GitHub:<br>
-  <a href="YOUR_GITHUB_REPO_URL_HERE">https://github.com/YOUR_USERNAME/ElectroMart</a>
-</p>
 ---
 
 ## 📂 Repository Structure
