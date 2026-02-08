@@ -60,16 +60,36 @@ def route_intent(message: str, history: list[dict], memory: dict | None = None) 
     m = message.lower()
     clean = " ".join(m.split())
 
+    # ----------------------------------------------------
+    # 0) Return flow is sticky, BUT allow explicit escape
+    # ----------------------------------------------------
     if memory.get("return_pending"):
-        memory["active_flow"] = "orders"
-        return "orders"
+        # Bare "101" usually means they are continuing the return flow
+        if BARE_ID_RE.match(message):
+            return _set_flow(memory, "orders")
+
+        # If user explicitly asks support/technical/tickets/warranty, let them leave
+        if any(k in m for k in SUPPORT_KW):
+            return _set_flow(memory, "support")
+
+        # If user clearly switches to marketing
+        if any(k in m for k in MARKETING_KW):
+            return _set_flow(memory, "marketing")
+
+        # If user clearly switches to buying flow (and not orders keywords)
+        if any(k in m for k in SALES_KW) and not any(k in m for k in ORDERS_KW) and not ORDER_ID_RE.search(message):
+            return _set_flow(memory, "sales")
+
+        # Otherwise stay in orders (default)
+        return _set_flow(memory, "orders")
 
     # -------------------------
     # 0) Sticky orders flow (VERY IMPORTANT)
     # -------------------------
     if memory.get("active_flow") == "orders":
+        # Policy questions about returns/refunds/exchange belong to ORDERS, not support
         if any(k in m for k in POLICY_KW) and not ORDER_ID_RE.search(message):
-            return _set_flow(memory, "support")
+            return _set_flow(memory, "orders")
 
         # Bare "101" should continue orders flow
         if BARE_ID_RE.match(message):

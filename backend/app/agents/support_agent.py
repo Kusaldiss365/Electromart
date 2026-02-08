@@ -23,9 +23,7 @@ Ambiguity handling (important):
 - Ask ONE short clarifying question to gather the minimum required detail.
 - When helpful, provide 2–3 example options the user can choose from (e.g., issue type or device model).
 - Do not open a support ticket unless the user explicitly asks for it or clearly confirms after you offer.
-
 """
-
 
 YES_WORDS = {
     "yes", "y", "yeah", "yep", "ok", "okay", "sure", "please", "go ahead", "do it"
@@ -37,6 +35,7 @@ def _wants_ticket(text: str) -> bool:
         "support ticket", "create ticket", "open ticket", "raise ticket",
         "create a ticket", "open a ticket", "raise a ticket",
         "log a ticket", "make a ticket",
+        "need a ticket", "need to create a support ticket",
         "contact support", "talk to support", "agent", "representative",
     ]
     return any(x in t for x in triggers)
@@ -47,7 +46,29 @@ def _wants_new_ticket(text: str) -> bool:
 
 def _is_yes(text: str) -> bool:
     t = (text or "").lower().strip()
-    return t in YES_WORDS
+    # allow "yes please", "ok go ahead", etc.
+    return any(w == t or w in t for w in YES_WORDS)
+
+def _create_ticket_now(db: Session, message: str, memory: dict) -> str:
+    oid = extract_order_id(message) or memory.get("last_order_id")
+
+    # Keep issue simple; you can improve this later (e.g., detect warranty/return/technical).
+    issue = memory.get("last_issue") or "Support request"
+    details = message or "User requested a support ticket."
+
+    t = create_support_ticket(db, issue, details, oid)
+
+    memory["support_ticket_id"] = t["ticket_id"]
+    memory["active_flow"] = "support"
+    memory.pop("ticket_pending", None)
+
+    if oid:
+        memory["order_id"] = oid
+        memory["last_order_id"] = oid
+
+    memory["last_issue"] = issue
+
+    return f"I opened a support ticket for you: **#{t['ticket_id']}**. Our team will follow up soon."
 
 def handle(db: Session, message: str, history: list[dict], memory: dict) -> str:
     faqs = search_faq(db, message, k=4)
@@ -69,42 +90,30 @@ def handle(db: Session, message: str, history: list[dict], memory: dict) -> str:
     wants_ticket = _wants_ticket(message)
     wants_new_ticket = _wants_new_ticket(message)
 
-    # If we previously asked "do you want me to open a ticket?" then a "yes" should create it
     confirms_ticket = bool(memory.get("ticket_pending")) and _is_yes(message)
+    effective_wants_ticket = wants_ticket or confirms_ticket
 
     # Existing ticket handling
     if existing_ticket_id:
         memory["active_flow"] = "support"
-        if wants_ticket and not wants_new_ticket:
+        if effective_wants_ticket and not wants_new_ticket:
             return f"A support ticket is already open for this issue: **#{existing_ticket_id}**."
-        # If user explicitly wants a NEW ticket, allow it by clearing old one
         if wants_new_ticket:
             memory.pop("support_ticket_id", None)
             existing_ticket_id = None
+
+    # ✅ HARD RULE: If user explicitly wants a ticket (or confirmed), create it NOW (no LLM dependency)
+    if effective_wants_ticket:
+        return _create_ticket_now(db, message, memory)
 
     # -------------------------
     # No-LLM path
     # -------------------------
     if not settings.OPENAI_API_KEY:
-        if wants_ticket or confirms_ticket:
-            oid = extract_order_id(message) or memory.get("last_order_id")
-            t = create_support_ticket(db, "Technical issue", message, oid)
-
-            memory["support_ticket_id"] = t["ticket_id"]
-            memory["active_flow"] = "support"
-            memory.pop("ticket_pending", None)
-
-            if oid:
-                memory["order_id"] = oid
-                memory["last_order_id"] = oid
-            memory["last_issue"] = "Technical issue"
-
-            return f"I opened a support ticket for you: **#{t['ticket_id']}**."
-
         # Troubleshooting first
+        memory["active_flow"] = "support"
+
         if faqs:
-            memory["active_flow"] = "support"
-            # Offer ticket creation, set pending
             memory["ticket_pending"] = True
             return (
                 "Try these steps:\n"
@@ -112,7 +121,6 @@ def handle(db: Session, message: str, history: list[dict], memory: dict) -> str:
                 + "\n\nIf this doesn’t help, want me to open a support ticket? (yes/no)"
             )
 
-        memory["active_flow"] = "support"
         memory["ticket_pending"] = True
         return (
             "What’s the exact model and what happens when you try to use it "
@@ -121,12 +129,11 @@ def handle(db: Session, message: str, history: list[dict], memory: dict) -> str:
         )
 
     # -------------------------
-    # LLM path (guarded)
+    # LLM path (for troubleshooting + asking 1 question)
     # -------------------------
     client = get_client()
     ctx = {
         "faq": faqs,
-        "wants_ticket": wants_ticket,
         "ticket_pending": bool(memory.get("ticket_pending")),
         "has_existing_ticket": bool(existing_ticket_id),
     }
@@ -141,53 +148,18 @@ def handle(db: Session, message: str, history: list[dict], memory: dict) -> str:
                 "content": (
                     f"User: {message}\n"
                     f"Context: {ctx}\n\n"
-                    "Rules:\n"
-                    "- Only create a ticket if wants_ticket=true OR ticket_pending=true and the user confirms (yes/ok/sure).\n"
-                    "- If has_existing_ticket=true, do NOT create a new one unless the user asks for a NEW/ANOTHER ticket.\n"
-                    "- Otherwise, give troubleshooting and ask 1–2 necessary questions.\n"
-                    "If you create a ticket, reply with: CREATE_TICKET: <issue>|<details>"
+                    "Do troubleshooting using FAQ if relevant.\n"
+                    "Ask ONE short clarifying question if needed.\n"
+                    "If you offer to open a support ticket, include: 'Reply yes to open a ticket.'"
                 ),
             },
         ],
         temperature=0.3
     )
-    text = resp.choices[0].message.content or ""
+    text = (resp.choices[0].message.content or "").strip()
 
-    # Treat user confirmations as "wants ticket" when pending
-    effective_wants_ticket = wants_ticket or confirms_ticket
-
-    # HARD GATE: ignore model-created tickets unless allowed
-    if text.startswith("CREATE_TICKET:") and not effective_wants_ticket:
-        memory["active_flow"] = "support"
+    if any(x in text.lower() for x in ["reply yes to open", "want me to open", "open a support ticket", "create a ticket", "raise a ticket"]):
         memory["ticket_pending"] = True
-        return (
-            "Got it. What’s the exact model and what happens when you try to use it "
-            "(won’t turn on, screen issue, battery, overheating, etc.)?\n"
-            "If you want, I can open a support ticket — reply **yes**."
-        )
 
-    if text.startswith("CREATE_TICKET:"):
-        payload = text.replace("CREATE_TICKET:", "").strip()
-        parts = payload.split("|", 1)
-        issue = parts[0].strip() if parts and parts[0].strip() else "Support request"
-        details = parts[1].strip() if len(parts) > 1 and parts[1].strip() else message
-
-        oid = extract_order_id(message) or memory.get("last_order_id")
-        t = create_support_ticket(db, issue, details, oid)
-
-        memory["support_ticket_id"] = t["ticket_id"]
-        memory["active_flow"] = "support"
-        memory.pop("ticket_pending", None)
-
-        if oid:
-            memory["order_id"] = oid
-            memory["last_order_id"] = oid
-        memory["last_issue"] = issue
-
-        return f"I opened a support ticket for you: **#{t['ticket_id']}**. Our team will follow up soon."
-
-    # If LLM didn't create ticket, keep a pending offer if it asked/it's troubleshooting
-    if any(x in text.lower() for x in ["want me to open", "open a support ticket", "create a ticket", "raise a ticket"]):
-        memory["ticket_pending"] = True
     memory["active_flow"] = "support"
     return text
