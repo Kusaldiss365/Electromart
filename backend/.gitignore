@@ -1,0 +1,30 @@
+# Python & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual env & version
+.venv/
+venv/
+env/
+.python-version
+
+# Secrets & local config
+.env
+*.env
+
+# Local SQLite database
+electromart.db
+*.db
+*.sqlite
+*.sqlite3
+
+# PyCharm / IntelliJ
+.idea/
+
+# uv lockfile (common to ignore)
+uv.lock
+
+# Misc
+.DS_Store
+Thumbs.db

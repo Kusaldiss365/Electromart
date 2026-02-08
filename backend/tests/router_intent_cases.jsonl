@@ -1,0 +1,30 @@
+{"text": "hi", "history": [], "memory": {}, "expected": "sales"}
+{"text": "good evening!", "history": [], "memory": {}, "expected": "sales"}
+{"text": "price of iPhone 15", "history": [], "memory": {}, "expected": "sales"}
+{"text": "recommend a fridge under 200k", "history": [], "memory": {}, "expected": "sales"}
+{"text": "compare samsung a55 vs a35", "history": [], "memory": {}, "expected": "sales"}
+{"text": "is it in stock", "history": [], "memory": {}, "expected": "sales"}
+{"text": "what payment methods do you accept?", "history": [], "memory": {}, "expected": "sales"}
+{"text": "delivery to kandy for a laptop", "history": [], "memory": {}, "expected": "sales"}
+{"text": "any discounts today?", "history": [], "memory": {}, "expected": "marketing"}
+{"text": "promo code or coupon available?", "history": [], "memory": {}, "expected": "marketing"}
+{"text": "any deals for tvs?", "history": [], "memory": {}, "expected": "marketing"}
+{"text": "loyalty campaign details", "history": [], "memory": {}, "expected": "marketing"}
+{"text": "track my order", "history": [], "memory": {}, "expected": "orders"}
+{"text": "order status please", "history": [], "memory": {}, "expected": "orders"}
+{"text": "i want a refund", "history": [], "memory": {}, "expected": "orders"}
+{"text": "cancel my order", "history": [], "memory": {}, "expected": "orders"}
+{"text": "exchange request", "history": [], "memory": {}, "expected": "orders"}
+{"text": "where is my order", "history": [], "memory": {}, "expected": "orders"}
+{"text": "my earbuds are not working", "history": [], "memory": {}, "expected": "support"}
+{"text": "warranty for this phone?", "history": [], "memory": {}, "expected": "support"}
+{"text": "help me setup the router", "history": [], "memory": {}, "expected": "support"}
+{"text": "there is an error when installing", "history": [], "memory": {}, "expected": "support"}
+{"text": "open ticket for my issue", "history": [], "memory": {}, "expected": "support"}
+{"text": "order id 12345 status?", "history": [], "memory": {}, "expected": "orders"}
+{"text": "#TRK-LK-000103 track", "history": [], "memory": {}, "expected": "orders"}
+{"text": "id 99110 shipped?", "history": [], "memory": {}, "expected": "orders"}
+{"text": "delivery and refund", "history": [], "memory": {}, "expected": "orders"}
+{"text": "price and return policy for order", "history": [], "memory": {}, "expected": "orders"}
+{"text": "can you deliver to colombo?", "history": [], "memory": {}, "expected": "sales"}
+{"text": "tell me something", "history": [], "memory": {}, "expected": "sales"}
