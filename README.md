@@ -1,4 +1,4 @@
-# 🏪 ElectroMart – AI-Powered E-Commerce Assistant
+# 🏪 ElectroMart – AI-Powered Multi-Agent Customer Support System
 
 ElectroMart is a full-stack AI-powered e-commerce assistant designed to handle **product inquiries, recommendations, promotions, order tracking, returns, and technical support** using a multi-agent architecture.
 
