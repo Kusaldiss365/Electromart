@@ -40,12 +40,21 @@ ISSUE_HINTS = [
 
 
 def _has_issue_details(text: str) -> bool:
-    t = (text or "").lower()
-    # if they only said "open ticket" / "support"
+    t = (text or "").lower().strip()
+    if not t:
+        return False
+
+    # If they only said "open ticket" / "support" with almost no details
     if _wants_ticket(t) and len(re.findall(r"[a-z0-9]+", t)) <= 4:
         return False
-    # contains symptom words OR message has some substance
-    return any(h in t for h in ISSUE_HINTS) or len(t.strip()) >= 40
+
+    # Strong signal: symptom keywords
+    if any(h in t for h in ISSUE_HINTS):
+        return True
+
+    # Otherwise, any reasonably descriptive message
+    return len(re.findall(r"[a-z0-9]+", t)) >= 6
+
 
 def _wants_ticket(text: str) -> bool:
     t = (text or "").lower()
@@ -110,7 +119,12 @@ def handle(db: Session, message: str, history: list[dict], memory: dict) -> str:
     wants_ticket = _wants_ticket(message)
     wants_new_ticket = _wants_new_ticket(message)
 
-    confirms_ticket = bool(memory.get("ticket_pending")) and _is_yes(message)
+    ticket_pending = bool(memory.get("ticket_pending"))
+
+    # If user already asked for a ticket and we asked for issue/model,
+    # then either "yes" OR providing issue details should proceed to ticket creation.
+    confirms_ticket = ticket_pending and (_is_yes(message) or _has_issue_details(message))
+
     effective_wants_ticket = wants_ticket or confirms_ticket
 
     # Existing ticket handling

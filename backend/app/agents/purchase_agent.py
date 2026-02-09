@@ -1,10 +1,37 @@
-from __future__ import annotations
-
 import re
 from sqlalchemy.orm import Session
-
-from app.core.config import settings
 from app.services.tools import search_products, create_lead
+
+
+SKU_RE = re.compile(
+    r"\bsku\b\s*[:#-]?\s*([A-Z0-9]+(?:-[A-Z0-9]+){2,})\b",
+    re.IGNORECASE,
+)
+
+SKU_ONLY_RE = re.compile(
+    r"^[A-Z0-9]+(?:-[A-Z0-9]+){2,}$"
+)
+
+def _extract_sku(text: str) -> str | None:
+    if not text:
+        return None
+
+    t = text.strip()
+
+    # Case 1: "SKU: APL-IP15-128-BLK"
+    m = SKU_RE.search(t)
+    if m:
+        return m.group(1).upper()
+
+    # Case 2: pasted SKU ONLY (must contain >= 2 hyphens)
+    t2 = t.upper().replace(" ", "")
+    if "-" in t2 and t2.count("-") >= 2 and SKU_ONLY_RE.fullmatch(t2):
+        return t2
+
+    # Anything else is NOT a SKU
+    return None
+
+
 
 
 def is_buy_now(message: str) -> bool:
@@ -52,7 +79,7 @@ def _looks_like_name(text: str) -> bool:
 
 
 def _build_pick_list(matches: list[dict], limit: int = 6) -> str:
-    lines = ["I found multiple products. Reply with the SKU you want:"]
+    lines = ["I found multiple products. Reply with ONLY the SKU (example: APL-IP15-128-BLK):"]
     for p in matches[:limit]:
         lines.append(f"- {p.get('name','—')} [SKU: {p.get('sku','—')}]")
     return "\n".join(lines)
@@ -66,10 +93,10 @@ def handle(db: Session, message: str, history: list[dict] | None, memory: dict |
     - Create lead and return lead id
     """
     history = history or []
-    memory = memory or {}
+    if memory is None:
+        memory = {}
 
     msg = (message or "").strip()
-    lower = msg.lower()
 
     # Memory flow object
     flow = memory.get("buy_flow") or {}
@@ -96,10 +123,20 @@ def handle(db: Session, message: str, history: list[dict] | None, memory: dict |
         if is_buy_now(msg):
             return "What product model or SKU do you want to buy?"
 
-        matches = search_products(db, msg, in_stock_only=False)
+        sku = _extract_sku(msg)
+        query = msg if not sku else sku
+        matches = search_products(db, query, in_stock_only=False)
 
         if not matches:
             return "I couldn’t find that product. Please reply with the exact model name or SKU."
+
+        # ONLY force exact matching if sku is REAL
+        if sku:
+            exact = [p for p in matches if (p.get("sku") or "").upper() == sku]
+            if exact:
+                matches = exact
+            else:
+                return f"I couldn’t find SKU: {sku}. Please copy the SKU exactly from the list."
 
         if len(matches) > 1:
             return _build_pick_list(matches)
@@ -110,7 +147,7 @@ def handle(db: Session, message: str, history: list[dict] | None, memory: dict |
         flow["step"] = "name"
         memory["buy_flow"] = flow
 
-        return f"Great. Buying: {flow['product_name']}\nWhat’s your name?"
+        return f"Great!\nBuying: {flow['product_name']}\nWhat’s your name?"
 
     # Step: name
     if step == "name":
@@ -131,12 +168,16 @@ def handle(db: Session, message: str, history: list[dict] | None, memory: dict |
         flow["phone"] = phone
 
         # 3) Create lead only now
+        interest = flow.get("product_name") or "Purchase"
+        notes = f"SKU: {flow.get('product_sku') or '—'}"
+
         lead = create_lead(
             db=db,
+            conversation_id=memory.get("conversation_id", ""),
             name=flow["name"],
             phone=flow["phone"],
-            product_model=flow.get("product_name"),
-            product_sku=flow.get("product_sku"),
+            interest=interest,
+            notes=notes,
         )
 
         lead_id = lead.get("lead_id") or lead.get("id")
@@ -149,11 +190,12 @@ def handle(db: Session, message: str, history: list[dict] | None, memory: dict |
         memory["buy_flow"] = {"active": False}
 
         return (
-            "Done! Lead created.\n"
-            f"Lead ID: {lead_id}\n"
+            "✅ Done! Your request has been submitted.\n\n"
+            f"Purchase Request ID: {lead_id}\n"
             f"Product: {flow.get('product_name')}\n"
             f"Name: {flow.get('name')}\n"
-            f"Phone: {flow.get('phone')}"
+            f"Phone: {flow.get('phone')}\n\n"
+            "Our team will contact you shortly."
         )
 
     # Safety fallback

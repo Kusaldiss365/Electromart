@@ -7,7 +7,7 @@ from app.agents.sales_agent import handle as sales_handle
 from app.agents.marketing_agent import handle as marketing_handle
 from app.agents.support_agent import handle as support_handle
 from app.agents.orders_agent import handle as orders_handle
-
+from app.agents.purchase_agent import handle as purchase_handle
 
 class ChatState(TypedDict):
     message: str
@@ -56,6 +56,13 @@ def orders_node(state: ChatState):
     return state
 
 
+def purchase_node(state: ChatState):
+    history = state.get("history", [])
+    memory = state.get("memory", {})
+    state["response"] = purchase_handle(state["db"], state["message"], history, memory)
+    return state
+
+
 def build_graph():
     g = StateGraph(ChatState)
     #register nodes
@@ -64,6 +71,7 @@ def build_graph():
     g.add_node("marketing", marketing_node)
     g.add_node("support", support_node)
     g.add_node("orders", orders_node)
+    g.add_node("purchase", purchase_node)
 
     g.set_entry_point("router")
     g.add_conditional_edges(
@@ -73,7 +81,9 @@ def build_graph():
             "sales": "sales",
             "marketing": "marketing",
             "support": "support",
-            "orders": "orders"},
+            "orders": "orders",
+            "purchase": "purchase"
+        },
     )
 
     #Once an agent replies → conversation turn is done.
@@ -81,6 +91,7 @@ def build_graph():
     g.add_edge("marketing", END)
     g.add_edge("support", END)
     g.add_edge("orders", END)
+    g.add_edge("purchase", END)
 
     #turns definition into an executable graph.
     return g.compile()

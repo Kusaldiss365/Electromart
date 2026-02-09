@@ -28,6 +28,8 @@ Rules (STRICT):
 - Never say “please hold”, “I’ll check”, or imply future replies.
 - Keep it concise and practical.
 - Always mention prices in LKR (Sri Lankan Rupees)
+- If asked about purchasing / checkout / buying now, DO NOT tell them to contact a sales team.
+  Instead, tell them to type exactly: "buy now" to start the purchase flow in this chat.
 
 Ambiguity handling (important):
 - If the user request is unclear or missing required order identifiers (such as order_id, phone number, or request number),
@@ -180,7 +182,7 @@ def handle(db: Session, message: str, history: list[dict], memory: dict) -> str:
         if oid:
             memory["last_order_id"] = oid
             return f"Please provide a reason for returning order **{oid}** (e.g., damaged, wrong item, not working, changed mind)."
-        return "Please provide your order ID and the reason for the return (e.g., Order 101 — damaged)."
+        return "Please provide your order ID and the reason for the return (e.g., Order 101 - damaged)."
 
     # If we were waiting for a reason and user provided it now → create return
     if memory.get("return_pending") and not info_question:
@@ -293,7 +295,8 @@ def handle(db: Session, message: str, history: list[dict], memory: dict) -> str:
                     "Only output CREATE_RETURN if:\n"
                     "- order.found is true, AND\n"
                     "- wants_return_action=true, AND\n"
-                    "- the user message contains a real reason (keywords or 'because ...') OR return_pending=true and the message is a reason.\n"
+                    "- if the user message contains a real reason (keywords or 'because ...') OR return_pending=true and the message is a reason.\n"
+                    "- If asked to buy/checkout, tell them to type exactly: 'buy now' to start the purchase flow.\n"
                     "Otherwise, ask for the missing info (order id and/or reason) with ONE short question.\n"
                 ),
             },

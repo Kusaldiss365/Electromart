@@ -302,7 +302,6 @@ def create_lead(
     subject = f"New Lead #{lead.id} — {lead.interest or 'Purchase'}"
     body = (
         f"Lead ID: {lead.id}\n"
-        f"Conversation: {lead.conversation_id}\n"
         f"Name: {lead.name}\n"
         f"Phone: {lead.phone}\n"
         f"Interest: {lead.interest}\n"

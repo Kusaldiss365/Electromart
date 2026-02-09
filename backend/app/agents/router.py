@@ -3,9 +3,10 @@ from app.core.config import settings
 from app.services.llm import get_client
 
 ROUTER_SYSTEM = """You are an intent router for an electronics store.
-Return ONLY one label: sales, marketing, support, orders.
+Return ONLY one label: sales, marketing, support, orders, purchase.
 
 Rules (strict):
+- purchase: user wants to start buying right now / checkout / how to buy / purchase now / buy now.
 - sales: buying intent, product inquiries, specs, pricing, availability/stock, comparisons, recommendations,
          payment methods (card/bank/COD), delivery location for a purchase, bundles/offers when selecting products.
 - orders: ONLY existing order flows: tracking/status/shipping updates, returns/refunds/cancel/exchange for an order.
@@ -39,19 +40,24 @@ SUPPORT_KW = [
 MARKETING_KW = ["discount", "promo", "deal", "offer", "coupon", "loyalty", "campaign"]
 
 POLICY_KW = [
-    "policy",
-    "return policy",
-    "refund policy",
-    "exchange policy",
-    "cancellation policy",
-    "terms",
-    "conditions",
+    "policy", "return policy", "refund policy", "exchange policy",
+    "cancellation policy", "terms", "conditions"
 ]
+
+PURCHASE_PHRASES = {
+    "buy now", "purchase now", "checkout", "place order", "order now", "proceed to buy",
+    "proceed to purchase", "how to buy", "how can i buy", "I want to buy now", "want to buy now",
+    "I need to buy now", "need to buy now", "I want to purchase now", "want to purchase now",
+    "I need to purchase now", "need to purchase now"
+}
 
 def _set_flow(memory: dict, label: str) -> str:
     memory["active_flow"] = label
     return label
 
+def _is_purchase_intent(message: str) -> bool:
+    clean = " ".join((message or "").lower().split())
+    return clean in PURCHASE_PHRASES
 
 def route_intent(message: str, history: list[dict], memory: dict | None = None) -> str:
     if memory is None:
@@ -60,8 +66,47 @@ def route_intent(message: str, history: list[dict], memory: dict | None = None) 
     m = message.lower()
     clean = " ".join(m.split())
 
+    # 0) Explicit checkout trigger (highest priority)
+    if _is_purchase_intent(message):
+        return _set_flow(memory, "purchase")
+
+    # ----------------------
+    # 0) Sticky purchase flow
+    # ----------------------
+    if memory.get("active_flow") == "purchase":
+        # allow explicit exits
+        if any(k in m for k in SUPPORT_KW):
+            return _set_flow(memory, "support")
+        if ORDER_ID_RE.search(message) or any(k in m for k in ORDERS_KW):
+            return _set_flow(memory, "orders")
+        if any(k in m for k in MARKETING_KW):
+            return _set_flow(memory, "marketing")
+        return _set_flow(memory, "purchase")
+
+    # ----------------------
+    # 0.5) Sticky support flow (ONLY when mid-ticket flow)
+    # ----------------------
+    if memory.get("active_flow") == "support":
+        # Stay in support if we're mid ticket flow / have an open ticket
+        if memory.get("ticket_pending"):
+            return _set_flow(memory, "support")
+
+        # Allow explicit switches out of support
+        if _is_purchase_intent(message) or any(k in m for k in SALES_KW):
+            return _set_flow(memory, "sales")
+        if ORDER_ID_RE.search(message) or any(k in m for k in ORDERS_KW):
+            return _set_flow(memory, "orders")
+        if any(k in m for k in MARKETING_KW):
+            return _set_flow(memory, "marketing")
+
+        # Default: stay in support while user is describing the issue
+        if any(k in m for k in SUPPORT_KW):
+            return _set_flow(memory, "support")
+
+        # If it's something like "yes/ok" and we are not pending, don't trap them — fall through
+
     # ----------------------------------------------------
-    # 0) Return flow is sticky, BUT allow explicit escape
+    # 1) Return flow is sticky, BUT allow explicit escape
     # ----------------------------------------------------
     if memory.get("return_pending"):
         # Bare "101" usually means they are continuing the return flow
@@ -83,9 +128,9 @@ def route_intent(message: str, history: list[dict], memory: dict | None = None) 
         # Otherwise stay in orders (default)
         return _set_flow(memory, "orders")
 
-    # -------------------------
-    # 0) Sticky orders flow (VERY IMPORTANT)
-    # -------------------------
+    # ----------------------
+    # 2) Sticky orders flow
+    # ----------------------
     if memory.get("active_flow") == "orders":
         # Policy questions about returns/refunds/exchange belong to ORDERS, not support
         if any(k in m for k in POLICY_KW) and not ORDER_ID_RE.search(message):
@@ -106,7 +151,7 @@ def route_intent(message: str, history: list[dict], memory: dict | None = None) 
         return _set_flow(memory, "orders")
 
     # -------------------------
-    # 1) Greetings → sales
+    # 3) Greetings → sales
     # -------------------------
     GREETINGS = {
         "hi", "hello", "hey",
@@ -117,7 +162,7 @@ def route_intent(message: str, history: list[dict], memory: dict | None = None) 
         return _set_flow(memory, "sales")
 
     # -------------------------
-    # 2) Sticky sales flow
+    # 4) Sticky sales flow
     # -------------------------
     if memory.get("active_flow") == "sales":
         if any(k in m for k in SUPPORT_KW):
@@ -129,7 +174,7 @@ def route_intent(message: str, history: list[dict], memory: dict | None = None) 
         return _set_flow(memory, "sales")
 
     # -------------------------
-    # 3) Keyword intent detection
+    # 5) Keyword intent detection
     # -------------------------
     has_order_id = bool(ORDER_ID_RE.search(message))
 
@@ -159,13 +204,13 @@ def route_intent(message: str, history: list[dict], memory: dict | None = None) 
         return _set_flow(memory, "sales")
 
     # -------------------------
-    # 4) No LLM → default sales
+    # 6) No LLM → default sales
     # -------------------------
     if not settings.OPENAI_API_KEY:
         return _set_flow(memory, "sales")
 
     # -------------------------
-    # 5) LLM fallback
+    # 7) LLM fallback
     # -------------------------
     client = get_client()
     resp = client.chat.completions.create(
@@ -179,6 +224,6 @@ def route_intent(message: str, history: list[dict], memory: dict | None = None) 
     )
 
     label = (resp.choices[0].message.content or "").strip().lower()
-    if label not in {"sales", "marketing", "support", "orders"}:
+    if label not in {"sales", "marketing", "support", "orders", "purchase"}:
         label = "sales"
     return _set_flow(memory, label)

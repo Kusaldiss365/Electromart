@@ -21,8 +21,8 @@ Guidelines:
 - Only recommend products that are in stock
 - Provide 1–3 product recommendations maximum
 - Compare products when asked
-- If asked about purchasing or checkout, politely explain that you handle product information only,
-  and they should contact the sales team to complete their purchase
+- If asked about purchasing / checkout / buying now, DO NOT tell them to contact a sales team.
+  Instead, tell them to type exactly: "buy now" to start the purchase flow in this chat.
 
 Ambiguity handling (important):
 - If the user request is unclear, vague, or missing key details (such as product category, budget, or usage),
@@ -160,7 +160,7 @@ def handle(
         "- Only use the products listed in Available products.\n"
         "- If no product matches, ask one clarifying question (budget / size / brand).\n"
         "- Prices must be in LKR.\n"
-        "- If asked to buy/checkout, say you can share product info and they should contact sales to purchase.\n"
+        '- If asked to buy/checkout, tell them to type exactly: "buy now" to start the purchase flow.\n'
     )
 
     try:
