@@ -81,14 +81,14 @@ Each agent:
 
 **Responsibilities**
 - Product specifications and comparisons
-- Pricing (always in LKR)
+- Share Pricing
 - Stock availability
 - Product recommendations (max 1–3)
 
 **Key Rules**
 - Recommends only in-stock products
 - Asks one clarifying question if input is vague
-- Does not complete checkout or payment
+- Does not handle checkout or payment
 
 **Memory Used**
 - `last_products`
@@ -219,7 +219,6 @@ This guarantees functionality in offline/local environments.
 
 ### Production (Recommended)
 - Containerized services
-- Redis for caching/rate limiting
 - Background workers for email and heavy tasks
 - Observability (structured logs, traces)
 
