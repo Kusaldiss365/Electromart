@@ -25,13 +25,14 @@ The project is structured as a **monorepo** with separate frontend and backend a
 
 ```
 electromart/
-├─ frontend/        # Frontend application (UI)
-│  └─ README.md     # Frontend-specific documentation
+├─ frontend/            # Frontend application (UI)
+│  └─ README.md         # Frontend-specific documentation
 │
-├─ backend/         # Backend application (API + AI agents)
-│  └─ README.md     # Backend-specific documentation
+├─ backend/             # Backend application (API + AI agents)
+│  ├─ ARCHITECTURE.md   # System architecture documentation
+│  └─ README.md         # Backend-specific documentation
 │
-└─ README.md        # This file (project overview)
+└─ README.md            # This file (project overview)
 ```
 
 ---
