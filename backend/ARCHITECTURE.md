@@ -159,6 +159,30 @@ Each agent:
 
 ---
 
+### 4.5 Purchase Agent
+
+**Responsibilities**
+- Capture user intent to purchase a product
+- Collect required user details (product, name, phone number)
+- Create a sales lead for follow-up by the sales team
+
+**Purchase Flow Rules**
+- Starts only when user types exactly: buy now
+- Multi-turn gated flow: product → name → phone
+- No payment processing or order creation
+- Lead is created only after all required details are collected
+
+**Memory Used**
+- `buy_flow (active state, current step)`
+- `last_lead_id`
+- `last_lead_product`
+
+**Tools**
+- Product search (model/SKU lookup)
+- Sales lead creation (with email notification)
+
+---
+
 ## 5. Conversation Persistence
 
 ### Conversations
