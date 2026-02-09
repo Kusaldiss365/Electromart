@@ -45,6 +45,7 @@ ElectroMart uses an **agent-based AI architecture** where user messages are rout
 - **Marketing Agent** – promotions, discounts, campaigns
 - **Orders Agent** – order tracking, delivery, returns, refunds
 - **Support Agent** – troubleshooting, warranty, setup, support tickets
+- **Purchase Agent** - Creates sales leads by capturing user purchase intent in chat
 
 Intent routing is **deterministic, memory-aware**, and protected by automated accuracy tests.
 
