@@ -51,7 +51,7 @@ Intent routing is **deterministic, memory-aware**, and protected by automated ac
 
 ---
 
-## 🎯 Key Features
+## Key Features
 
 - AI-driven conversational shopping experience
 - Deterministic intent routing with ≥85% accuracy enforcement
@@ -70,7 +70,7 @@ The **frontend** provides the user interface for interacting with the ElectroMar
 📁 `frontend/`
 
 **Setup & usage:**  
-👉 See **[`frontend/README.md`](./frontend/README.md)** for:
+See **[`frontend/README.md`](./frontend/README.md)** for:
 - Tech stack details
 - Installation steps
 - Development & build commands
@@ -86,7 +86,7 @@ The **backend** powers the AI agents, intent routing, database access, and APIs.
 📁 `backend/`
 
 **Setup & usage:**  
-👉 See **[`backend/README.md`](./backend/README.md)** for:
+See **[`backend/README.md`](./backend/README.md)** for:
 - Environment configuration
 - Docker & database setup
 - Running the API server
@@ -95,7 +95,7 @@ The **backend** powers the AI agents, intent routing, database access, and APIs.
 
 ---
 
-## 🧪 Quality & Testing
+## Quality & Testing
 
 - Intent routing accuracy is evaluated using a labeled dataset
 - Automated tests enforce a **minimum accuracy threshold**
@@ -105,7 +105,7 @@ The **backend** powers the AI agents, intent routing, database access, and APIs.
 
 ---
 
-## 👤 Maintainer
+## Maintainer
 
 **Kusal Dissanayake**  
 Software Engineer | AI & Backend Systems
