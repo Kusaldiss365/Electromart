@@ -1,4 +1,4 @@
-# 🛒 ElectroMart – AI-Powered E-Commerce Assistant
+# ⚡ ElectroMart – AI-Powered Multi-Agent Customer Support System
 
 ElectroMart is a full-stack AI-powered e-commerce assistant designed to handle **product inquiries, recommendations, promotions, order tracking, returns, and technical support** using a multi-agent architecture.
 
@@ -7,9 +7,9 @@ The project is structured as a **monorepo** with separate frontend and backend a
 <br>
 
 <p align="center">
-  <a href="https://youtu.be/RGqzeBq9rMs" target="_blank" rel="noopener noreferrer">
+  <a href="https://youtu.be/j0OJNfm8hcY" target="_blank" rel="noopener noreferrer">
     <img 
-      src="https://img.youtube.com/vi/RGqzeBq9rMs/maxresdefault.jpg" 
+      src="https://img.youtube.com/vi/j0OJNfm8hcY/maxresdefault.jpg" 
       alt="ElectroMart Demo Video" 
       width="640" 
       style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"
@@ -37,7 +37,7 @@ electromart/
 
 ---
 
-## 🧠 System Overview
+## System Overview
 
 ElectroMart uses an **agent-based AI architecture** where user messages are routed to specialized agents based on intent:
 
@@ -45,12 +45,13 @@ ElectroMart uses an **agent-based AI architecture** where user messages are rout
 - **Marketing Agent** – promotions, discounts, campaigns
 - **Orders Agent** – order tracking, delivery, returns, refunds
 - **Support Agent** – troubleshooting, warranty, setup, support tickets
+- **Purchase Agent** - Creates sales leads by capturing user purchase intent in chat
 
 Intent routing is **deterministic, memory-aware**, and protected by automated accuracy tests.
 
 ---
 
-## 🎯 Key Features
+## Key Features
 
 - AI-driven conversational shopping experience
 - Deterministic intent routing with ≥85% accuracy enforcement
@@ -69,7 +70,7 @@ The **frontend** provides the user interface for interacting with the ElectroMar
 📁 `frontend/`
 
 **Setup & usage:**  
-👉 See **[`frontend/README.md`](./frontend/README.md)** for:
+See **[`frontend/README.md`](./frontend/README.md)** for:
 - Tech stack details
 - Installation steps
 - Development & build commands
@@ -85,7 +86,7 @@ The **backend** powers the AI agents, intent routing, database access, and APIs.
 📁 `backend/`
 
 **Setup & usage:**  
-👉 See **[`backend/README.md`](./backend/README.md)** for:
+See **[`backend/README.md`](./backend/README.md)** for:
 - Environment configuration
 - Docker & database setup
 - Running the API server
@@ -94,7 +95,7 @@ The **backend** powers the AI agents, intent routing, database access, and APIs.
 
 ---
 
-## 🧪 Quality & Testing
+## Quality & Testing
 
 - Intent routing accuracy is evaluated using a labeled dataset
 - Automated tests enforce a **minimum accuracy threshold**
@@ -104,7 +105,7 @@ The **backend** powers the AI agents, intent routing, database access, and APIs.
 
 ---
 
-## 👤 Maintainer
+## Maintainer
 
 **Kusal Dissanayake**  
 Software Engineer | AI & Backend Systems
