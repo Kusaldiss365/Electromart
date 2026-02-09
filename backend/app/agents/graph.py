@@ -58,6 +58,7 @@ def orders_node(state: ChatState):
 
 def build_graph():
     g = StateGraph(ChatState)
+    #register nodes
     g.add_node("router", router_node)
     g.add_node("sales", sales_node)
     g.add_node("marketing", marketing_node)
@@ -68,12 +69,18 @@ def build_graph():
     g.add_conditional_edges(
         "router",
         lambda s: s["route"],
-        {"sales": "sales", "marketing": "marketing", "support": "support", "orders": "orders"},
+        {
+            "sales": "sales",
+            "marketing": "marketing",
+            "support": "support",
+            "orders": "orders"},
     )
 
+    #Once an agent replies → conversation turn is done.
     g.add_edge("sales", END)
     g.add_edge("marketing", END)
     g.add_edge("support", END)
     g.add_edge("orders", END)
 
+    #turns definition into an executable graph.
     return g.compile()

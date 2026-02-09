@@ -1,3 +1,5 @@
+import re
+
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.services.faq_rag import search_faq
@@ -29,6 +31,22 @@ YES_WORDS = {
     "yes", "y", "yeah", "yep", "ok", "okay", "sure", "please", "go ahead", "do it"
 }
 
+ISSUE_HINTS = [
+    "won't", "wont", "not", "can't", "cant", "error", "failed", "broken",
+    "screen", "display", "battery", "charge", "charging", "overheat", "heating",
+    "sound", "speaker", "mic", "camera", "wifi", "bluetooth", "signal",
+    "slow", "lag", "restart", "stuck", "crash", "update", "setup"
+]
+
+
+def _has_issue_details(text: str) -> bool:
+    t = (text or "").lower()
+    # if they only said "open ticket" / "support"
+    if _wants_ticket(t) and len(re.findall(r"[a-z0-9]+", t)) <= 4:
+        return False
+    # contains symptom words OR message has some substance
+    return any(h in t for h in ISSUE_HINTS) or len(t.strip()) >= 40
+
 def _wants_ticket(text: str) -> bool:
     t = (text or "").lower()
     triggers = [
@@ -52,8 +70,10 @@ def _is_yes(text: str) -> bool:
 def _create_ticket_now(db: Session, message: str, memory: dict) -> str:
     oid = extract_order_id(message) or memory.get("last_order_id")
 
-    # Keep issue simple; you can improve this later (e.g., detect warranty/return/technical).
-    issue = memory.get("last_issue") or "Support request"
+    issue = memory.get("last_issue")
+    if not issue or issue == "Support request":
+        issue = (message.strip()[:60] or "Support request")
+
     details = message or "User requested a support ticket."
 
     t = create_support_ticket(db, issue, details, oid)
@@ -102,8 +122,19 @@ def handle(db: Session, message: str, history: list[dict], memory: dict) -> str:
             memory.pop("support_ticket_id", None)
             existing_ticket_id = None
 
-    # ✅ HARD RULE: If user explicitly wants a ticket (or confirmed), create it NOW (no LLM dependency)
+    # HARD RULE: If user explicitly wants a ticket (or confirmed), create it NOW (no LLM dependency)
     if effective_wants_ticket:
+        memory["active_flow"] = "support"
+
+        # If we don't yet have usable issue details, ask ONE question first
+        if not _has_issue_details(message) and not memory.get("last_issue"):
+            memory["ticket_pending"] = True
+            return (
+                "Sure, I can open a support ticket. What’s the issue in one line, and what’s the exact device model?\n"
+                "Examples: *“iPhone 13 battery drains fast”*, *“Samsung A54 won’t charge”*."
+            )
+
+        # create ticket
         return _create_ticket_now(db, message, memory)
 
     # -------------------------

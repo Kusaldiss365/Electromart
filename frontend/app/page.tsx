@@ -52,20 +52,14 @@ type ChatMsg = {
 };
 
 export default function Page() {
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      text: "Hi! Welcome to ElectroMart👋🏻\nAsk me about products, promotions, order tracking, returns or for support.",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const [conversationId, setConversationId] = useState<string>("");
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  // ✅ NEW: input ref to focus after voice transcription
+  //input ref to focus after voice transcription
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_BASE, []);
@@ -107,7 +101,13 @@ export default function Page() {
 
         if (loaded.length > 0) setMessages(loaded);
       } catch {
-        // ignore; keep local UI
+        setMessages([
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            text: "Hi! Welcome to ElectroMart👋🏻\nAsk me about products, promotions, order tracking, returns or for support.",
+          },
+        ]);
       }
     })();
   }, [apiBase, conversationId]);
@@ -177,7 +177,7 @@ export default function Page() {
           console.error(err);
           setListening(false);
           alert("Voice recognition failed");
-        }
+        },
       );
     } catch (e) {
       alert("Voice input not supported. Use Chrome or Edge.");
@@ -222,7 +222,9 @@ export default function Page() {
       <div className="w-full max-w-2xl p-4 flex flex-col gap-4 h-screen">
         <header className="py-2 flex items-center justify-between flex-shrink-0">
           <div>
-            <h1 className="text-xl font-semibold text-amber-300">ElectroMart Chat</h1>
+            <h1 className="text-xl font-semibold text-amber-300">
+              ElectroMart Chat
+            </h1>
             <p className="text-sm text-neutral-400">
               Chat history is saved (Clear chat to reset)
             </p>

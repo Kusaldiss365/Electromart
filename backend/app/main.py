@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.db import Base, engine, get_db
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.agents.graph import build_graph
-
+from datetime import datetime, timezone
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import models so Base.metadata knows them
@@ -18,18 +18,18 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "http://localhost:3001",     # sometimes Next.js uses 3001 on reload
-        "*"                          # ← temporary test wildcard (remove later)
+        "http://localhost:3001",
+        "*"
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS", "DELETE"],  # be explicit first
+    allow_methods=["GET", "POST", "OPTIONS", "DELETE"],
     allow_headers=["Content-Type", "Authorization", "*"],
     expose_headers=["*"],
     max_age=600,
 )
 
 
-# Create tables (simple for assessment; Alembic optional)
+# Create tables
 Base.metadata.create_all(bind=engine)
 
 graph = build_graph()
@@ -76,16 +76,45 @@ def chat(req: ChatRequest, db: Session = Depends(get_db)):
     return {"route": out["route"], "response": out["response"]}
 
 
-#refresh chat
 @app.get("/conversations/{conversation_id}")
 def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
     rows = load_history(db, conversation_id, limit=200)
+
+    # If no history exists, create and save welcome message
+    if not rows or len(rows) == 0:
+        welcome_text = "Hi! Welcome to ElectroMart👋🏻\nAsk me about products, promotions, order tracking, returns or for support."
+
+        # Save welcome message to database
+        add_message(
+            db=db,
+            conversation_id=conversation_id,
+            role="assistant",
+            content=welcome_text,
+            route="sales",
+            input_type=None
+        )
+
+        # Also ensure conversation exists
+        get_or_create_conversation(db, conversation_id)
+
+        return {
+            "conversation_id": conversation_id,
+            "messages": [
+                {
+                    "role": "assistant",
+                    "text": welcome_text,
+                    "route": "sales",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+            ]
+        }
+
     return {
-      "conversation_id": conversation_id,
-      "messages": [
-        {"role": r.role, "text": r.content, "route": r.route, "created_at": r.created_at.isoformat()}
-        for r in rows
-      ]
+        "conversation_id": conversation_id,
+        "messages": [
+            {"role": r.role, "text": r.content, "route": r.route, "created_at": r.created_at.isoformat()}
+            for r in rows
+        ]
     }
 
 @app.delete("/conversations/{conversation_id}")
