@@ -188,9 +188,10 @@ def handle(db: Session, message: str, history: list[dict] | None, memory: dict |
 
         # Reset flow
         memory["buy_flow"] = {"active": False}
+        memory["active_flow"] = "sales"
 
         return (
-            "✅ Done! Your request has been submitted.\n\n"
+            "Done! Your request has been submitted.\n\n"
             f"Purchase Request ID: {lead_id}\n"
             f"Product: {flow.get('product_name')}\n"
             f"Name: {flow.get('name')}\n"
@@ -200,4 +201,6 @@ def handle(db: Session, message: str, history: list[dict] | None, memory: dict |
 
     # Safety fallback
     memory["buy_flow"] = {"active": False}
+    memory.pop("buy_flow", None)
+    memory["active_flow"] = "sales"
     return 'Something went wrong with the buy flow. Type "buy now" to start again.'
