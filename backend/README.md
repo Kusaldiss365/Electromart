@@ -1,4 +1,4 @@
-# ⚡ ElectroMart – AI-Powered Sales & Support Backend
+# ⚡ ElectroMart – Backend
 
 ElectroMart is a FastAPI-based backend that powers an AI-driven **sales, marketing, and support system** for an e-commerce platform.  
 It uses **agent-based LLM workflows**, **PostgreSQL + pgvector**, and **OpenAI models** to deliver intelligent responses and lead generation.
