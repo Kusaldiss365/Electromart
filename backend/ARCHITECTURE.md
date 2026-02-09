@@ -36,7 +36,7 @@ Key characteristics:
 
 Flow:
 ```
-router → sales | marketing | support | orders → END
+router → sales | marketing | support | orders | purchase → END
 ```
 
 ### Database (PostgreSQL + pgvector)
