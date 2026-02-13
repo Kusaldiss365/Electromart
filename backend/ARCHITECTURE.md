@@ -59,6 +59,7 @@ Routing labels:
 - `marketing`
 - `support`
 - `orders`
+- `purchase`
 
 ### Routing Strategy
 - Keyword + regex rules first
