@@ -1,4 +1,4 @@
-# ⚡ ElectroMart – AI-Powered Multi-Agent Customer Support System
+# ElectroMart – AI-Powered Multi-Agent Customer Support System
 
 ElectroMart is a full-stack AI-powered e-commerce assistant designed to handle **product inquiries, recommendations, promotions, order tracking, returns, and technical support** using a multi-agent architecture.
 
@@ -21,7 +21,7 @@ The project is structured as a **monorepo** with separate frontend and backend a
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 ```
 electromart/
@@ -62,12 +62,12 @@ Intent routing is **deterministic, memory-aware**, and protected by automated ac
 
 ---
 
-## 🖥 Frontend
+## Frontend
 
 The **frontend** provides the user interface for interacting with the ElectroMart assistant.
 
 **Location:**  
-📁 `frontend/`
+`frontend/`
 
 **Setup & usage:**  
 See **[`frontend/README.md`](./frontend/README.md)** for:
@@ -83,7 +83,7 @@ See **[`frontend/README.md`](./frontend/README.md)** for:
 The **backend** powers the AI agents, intent routing, database access, and APIs.
 
 **Location:**  
-📁 `backend/`
+`backend/`
 
 **Setup & usage:**  
 See **[`backend/README.md`](./backend/README.md)** for:
@@ -112,7 +112,7 @@ Software Engineer | AI & Backend Systems
 
 ---
 
-## 📌 Notes
+## Notes
 
 - Each folder (`frontend`, `backend`) is independently runnable
 - Please follow the README inside each folder for setup
